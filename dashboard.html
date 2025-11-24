@@ -1,0 +1,172 @@
+<!-- dashboard.html (file storage with previews, download, rename, fullscreen modal, progress bar) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Storage</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+
+<script>
+  if (localStorage.getItem('loggedIn') !== 'true') {
+    window.location.href = 'login.html';
+  }
+</script>
+
+<h1 class="text-3xl font-bold">Welcome to Your Secure File Storage</h1>
+<button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-xl mt-4">Logout</button>
+
+<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+  <!-- Documents -->
+  <div class="bg-white shadow p-6 rounded-xl">
+    <h2 class="text-xl font-semibold mb-2">📄 Documents</h2>
+    <input type="file" id="docUpload" accept=".pdf,.txt,.doc,.docx" class="mb-4" />
+    <button onclick="saveFileWithProgress('docs','docUpload')" class="bg-blue-600 text-white px-4 py-2 rounded-xl">Save Document</button>
+    <progress id="uploadProgress" value="0" max="100" class="hidden w-full h-3 mt-4"></progress>
+    <div id="docList" class="grid grid-cols-1 gap-3 mt-4"></div>
+  </div>
+
+  <!-- Images -->
+  <div class="bg-white shadow p-6 rounded-xl">
+    <h2 class="text-xl font-semibold mb-2">🖼️ Photos</h2>
+    <input type="file" id="imgUpload" accept="image/*" class="mb-4" />
+    <button onclick="saveFileWithProgress('images','imgUpload')" class="bg-green-600 text-white px-4 py-2 rounded-xl">Save Image</button>
+    <div id="imgList" class="grid grid-cols-2 gap-4 mt-4"></div>
+  </div>
+
+  <!-- Videos -->
+  <div class="bg-white shadow p-6 rounded-xl">
+    <h2 class="text-xl font-semibold mb-2">🎥 Videos</h2>
+    <input type="file" id="vidUpload" accept="video/*" class="mb-4" />
+    <button onclick="saveFileWithProgress('videos','vidUpload')" class="bg-purple-600 text-white px-4 py-2 rounded-xl">Save Video</button>
+    <div id="vidList" class="grid grid-cols-2 gap-4 mt-4"></div>
+  </div>
+
+</div>
+
+<!-- MODAL VIEWER -->
+<div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center p-6 z-50">
+  <div class="bg-white p-4 rounded-xl shadow-xl max-w-2xl w-full">
+    <span onclick="closePreview()" class="float-right text-red-600 text-xl cursor-pointer">✖</span>
+    <div id="previewContent" class="mt-4"></div>
+  </div>
+</div>
+
+<script>
+const colors = ['bg-red-100','bg-blue-100','bg-green-100','bg-yellow-100','bg-purple-100','bg-pink-100'];
+
+function saveFileWithProgress(type, inputId) {
+  let input = document.getElementById(inputId);
+  if (!input.files[0]) return alert("Please select a file");
+  let bar = document.getElementById('uploadProgress');
+  bar.classList.remove('hidden');
+  bar.value = 10;
+
+  let reader = new FileReader();
+  reader.onloadstart = () => { bar.value = 30; };
+  reader.onprogress = () => { bar.value = 70; };
+  reader.onloadend = () => { bar.value = 100; };
+
+  reader.onload = function(e) {
+    let files = JSON.parse(localStorage.getItem(type)) || [];
+    files.push({ name: input.files[0].name, data: e.target.result });
+    localStorage.setItem(type, JSON.stringify(files));
+    alert('File saved!');
+    location.reload();
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function loadFiles() {
+  loadList('docs','docList');
+  loadList('images','imgList');
+  loadList('videos','vidList');
+}
+
+function loadList(type, containerId) {
+  let items = JSON.parse(localStorage.getItem(type)) || [];
+  let container = document.getElementById(containerId);
+  items.forEach((file, index) => {
+    let randomBg = colors[Math.floor(Math.random() * colors.length)];
+    if(type === 'images') {
+      container.innerHTML += `
+        <div class='${randomBg} p-3 rounded-xl shadow'>
+          <img src='${file.data}' class='w-full h-32 object-cover rounded-lg cursor-pointer' onclick="openPreview('image','${file.data}')" />
+          <p class='mt-2 text-center text-sm font-semibold'>${file.name}</p>
+          <div class='flex justify-between mt-2'>
+            <button onclick="downloadFile('${file.data}','${file.name}')" class='bg-blue-500 text-white px-2 py-1 rounded'>Download</button>
+            <button onclick="renameFile('${type}',${index})" class='bg-yellow-500 text-white px-2 py-1 rounded'>Rename</button>
+            <button onclick="deleteFile('${type}',${index})" class='bg-red-500 text-white px-2 py-1 rounded'>Delete</button>
+          </div>
+        </div>`;
+    } else if(type === 'videos') {
+      container.innerHTML += `
+        <div class='${randomBg} p-3 rounded-xl shadow'>
+          <video src='${file.data}' class='w-full h-32 rounded-lg cursor-pointer' onclick="openPreview('video','${file.data}')" controls></video>
+          <p class='mt-2 text-center text-sm font-semibold'>${file.name}</p>
+          <div class='flex justify-between mt-2'>
+            <button onclick="downloadFile('${file.data}','${file.name}')" class='bg-blue-500 text-white px-2 py-1 rounded'>Download</button>
+            <button onclick="renameFile('${type}',${index})" class='bg-yellow-500 text-white px-2 py-1 rounded'>Rename</button>
+            <button onclick="deleteFile('${type}',${index})" class='bg-red-500 text-white px-2 py-1 rounded'>Delete</button>
+          </div>
+        </div>`;
+    } else {
+      container.innerHTML += `
+        <div class='${randomBg} p-3 rounded-xl shadow flex justify-between items-center'>
+          <p class='font-semibold'>${file.name}</p>
+          <div class='flex gap-2'>
+            <button onclick="downloadFile('${file.data}','${file.name}')" class='bg-blue-500 text-white px-2 py-1 rounded'>Download</button>
+            <button onclick="renameFile('${type}',${index})" class='bg-yellow-500 text-white px-2 py-1 rounded'>Rename</button>
+            <button onclick="deleteFile('${type}',${index})" class='bg-red-500 text-white px-2 py-1 rounded'>Delete</button>
+          </div>
+        </div>`;
+    }
+  });
+}
+
+function deleteFile(type,index){
+  let items=JSON.parse(localStorage.getItem(type));
+  items.splice(index,1);
+  localStorage.setItem(type,JSON.stringify(items));
+  location.reload();
+}
+
+function downloadFile(data,name){
+  let a=document.createElement('a');
+  a.href=data;
+  a.download=name;
+  a.click();
+}
+
+function renameFile(type,index){
+  let items=JSON.parse(localStorage.getItem(type));
+  let newName=prompt('Enter new name:',items[index].name);
+  if(!newName)return;
+  items[index].name=newName;
+  localStorage.setItem(type,JSON.stringify(items));
+  location.reload();
+}
+
+function openPreview(type,data){
+  let box=document.getElementById('previewContent');
+  if(type==='image') box.innerHTML=`<img src='${data}' class='w-full rounded-xl'/>`;
+  else if(type==='video') box.innerHTML=`<video src='${data}' class='w-full rounded-xl' controls autoplay></video>`;
+  document.getElementById('previewModal').classList.remove('hidden');
+}
+function closePreview(){
+  document.getElementById('previewModal').classList.add('hidden');
+}
+
+function logout(){
+  localStorage.setItem('loggedIn','false');
+  window.location.href='login.html';
+}
+
+loadFiles();
+</script>
+
+</body>
+</html>

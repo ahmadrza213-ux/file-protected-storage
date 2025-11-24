@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+
+  <div class="bg-white p-8 rounded-2xl shadow-lg w-96">
+    <h2 class="text-2xl font-bold mb-4 text-center">Create Secure Account</h2>
+
+    <form onsubmit="saveUser(event)" class="space-y-4">
+      <input id="user" type="text" placeholder="Username" class="w-full p-3 border rounded-xl" required />
+      <input id="pass" type="password" placeholder="Password" class="w-full p-3 border rounded-xl" required />
+      <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-xl">Signup</button>
+    </form>
+
+    <p class="text-center mt-3">Already have an account? 
+      <a href="login.html" class="text-blue-600">Login</a>
+    </p>
+  </div>
+
+  <script>
+    function saveUser(e) {
+      e.preventDefault();
+
+      // Save username & password in localStorage
+      localStorage.setItem('storageUser', document.getElementById('user').value);
+      localStorage.setItem('storagePass', document.getElementById('pass').value);
+
+      alert("Account created successfully!");
+      window.location.href = 'login.html';
+    }
+  </script>
+
+</body>
+</html>

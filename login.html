@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Login</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+<div class="bg-white p-8 rounded-2xl shadow-lg w-96">
+<h2 class="text-2xl font-bold mb-4 text-center">User Login</h2>
+
+
+<form onsubmit="login(event)" class="space-y-4">
+<input id="logUser" type="text" placeholder="Username" class="w-full p-3 border rounded-xl" required />
+<input id="logPass" type="password" placeholder="Password" class="w-full p-3 border rounded-xl" required />
+<button class="w-full bg-blue-600 text-white py-3 rounded-xl">Login</button>
+</form>
+
+
+<p class="text-center mt-3">No account? <a href="signup.html" class="text-blue-600">Signup</a></p>
+</div>
+
+
+<script>
+function login(e) {
+e.preventDefault();
+
+
+let u = document.getElementById('logUser').value;
+let p = document.getElementById('logPass').value;
+
+
+let savedU = localStorage.getItem('storageUser');
+let savedP = localStorage.getItem('storagePass');
+
+
+if (u === savedU && p === savedP) {
+alert("Login successful!");
+localStorage.setItem('loggedIn', 'true');
+window.location.href = 'dashboard.html';
+} else {
+alert("Invalid username or password");
+}
+}
+</script>
+</body>
+</html>
+
